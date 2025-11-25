@@ -16,7 +16,7 @@
 
     <nav class="flex items-center gap-3">
       @auth
-      <a href="{{ route('events.index') }}" class="text-sm text-gray-700 hover:text-indigo-600">Explore</a>
+      <a href="{{ route('events.index') }}" class="text-sm text-gray-700 hover:text-indigo-600">Jelajah</a>
       <a href="{{ route('dashboard') }}" class="text-sm text-gray-700 hover:text-indigo-600">Dashboard</a>
       @endauth
 

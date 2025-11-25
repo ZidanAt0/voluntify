@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-0">
+<div class="max-w-7xl mx-auto px-4 sm:px-0 py-0">
     <h1 class="text-2xl font-bold">Explore Events</h1>
 
     {{-- Filter Bar (tetap) --}}

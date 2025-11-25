@@ -2,41 +2,44 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\BookmarkController;
+use App\Http\Controllers\UserDashboardController;
+use Illuminate\Support\Facades\Route;
 
-
-// landing
+// Landing
 Route::view('/', 'landing')->name('home');
 Route::redirect('/home', '/');
 
-// auth+profile breeze
+// Auth + Profile
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// dashboard
-Route::middleware(['auth','verified'])->get('/dashboard', function () {
-    $user = auth()->user();
+// Dashboard per role (user/organizer/admin)
+Route::middleware(['auth','verified'])->group(function () {
+    Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
 
-    if ($user->hasRole('admin')) {
-        return view('admin.dashboard');
-    }
-    if ($user->hasRole('organizer')) {
-        return view('organizer.dashboard');
-    }
-    return view('user.dashboard'); // default
-})->name('dashboard');
+    Route::middleware('role:organizer')->prefix('organizer')->name('organizer.')->group(function () {
+        Route::view('/dashboard', 'organizer.dashboard')->name('dashboard'); // nanti diganti controller
+    });
 
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::view('/dashboard', 'admin.dashboard')->name('dashboard'); // nanti diganti controller
+    });
+});
+
+// Catalog events
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/{slug}', [EventController::class, 'show'])->name('events.show');
 
-// Apply
-Route::post('/events/{event}/apply', [RegistrationController::class, 'store'])
-    ->middleware('auth')->name('registrations.apply');
+// Apply form & submit (JANGAN duplikat)
+Route::middleware('auth')->group(function () {
+    Route::get('/events/{event}/apply', [RegistrationController::class, 'create'])->name('registrations.apply.form');
+    Route::post('/events/{event}/apply', [RegistrationController::class, 'store'])->name('registrations.apply');
+});
 
 // My Registrations
 Route::middleware('auth')->group(function () {
@@ -45,24 +48,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/me/registrations/{registration}', [RegistrationController::class, 'destroy'])->name('registrations.cancel');
 });
 
-// Form Apply (harus login)
-Route::get('/events/{event}/apply', [RegistrationController::class, 'create'])
-    ->middleware('auth')
-    ->name('registrations.apply.form');
-
-// Submit Apply
-Route::post('/events/{event}/apply', [RegistrationController::class, 'store'])
-    ->middleware('auth')
-    ->name('registrations.apply');
-
-// Bookmark
+// Bookmarks
 Route::middleware('auth')->group(function () {
     Route::get('/me/bookmarks', [BookmarkController::class, 'index'])->name('bookmarks.index');
-
-    // pakai slug jika Event binding by slug
     Route::post('/events/{event}/bookmark', [BookmarkController::class, 'store'])->name('bookmarks.store');
     Route::delete('/events/{event}/bookmark', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
 });
 
-// Auth routes (login/register/forgot/etc.)
 require __DIR__.'/auth.php';
