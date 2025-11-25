@@ -112,16 +112,30 @@ class RegistrationController extends Controller
         return redirect()->route('registrations.index')->with('status', 'Pendaftaran dibatalkan.');
     }
 
-    // GET /me/registrations
     public function index(Request $request)
     {
-        $regs = Registration::with('event')
-            ->where('user_id', $request->user()->id)
-            ->latest()
-            ->paginate(10);
+        $status = $request->query('status');
+        $q      = $request->query('q');
 
-        return view('registrations.index', compact('regs'));
+        $regs = \App\Models\Registration::with(['event.category'])
+            ->where('user_id', $request->user()->id)
+            ->when($status, fn($qq) => $qq->where('status', $status))
+            ->when($q, fn($qq) => $qq->whereHas('event', fn($ee) =>
+                $ee->where('title', 'like', '%'.$q.'%')
+            ))
+            ->latest()
+            ->paginate(9)
+            ->withQueryString();
+
+        $counts = \App\Models\Registration::selectRaw('status, COUNT(*) as total')
+            ->where('user_id', $request->user()->id)
+            ->groupBy('status')
+            ->pluck('total','status')
+            ->all();
+
+        return view('registrations.index', compact('regs','status','q','counts'));
     }
+
 
     // GET /me/registrations/{registration}
     public function show(Request $request, Registration $registration)

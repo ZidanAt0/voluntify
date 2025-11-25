@@ -39,6 +39,10 @@ class User extends Authenticatable
 
     public function registrations() { return $this->hasMany(\App\Models\Registration::class); }
     public function bookmarks(){ return $this->hasMany(\App\Models\Bookmark::class); }
-    public function bookmarkedEvents(){ return $this->belongsToMany(\App\Models\Event::class,'bookmarks'); }
+    public function bookmarkedEvents()
+    {
+        return $this->belongsToMany(\App\Models\Event::class, 'bookmarks')
+                    ->withPivot('created_at')->withTimestamps();
+    }
 
 }
