@@ -19,8 +19,13 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * Register any authentication / authorization services.
      */
+
     public function boot(): void
     {
-        //
+        $this->registerPolicies();
+
+        \Illuminate\Support\Facades\Gate::define('own', function ($user, $registration) {
+            return $registration->user_id === $user->id;
+        });
     }
 }

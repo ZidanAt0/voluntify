@@ -1,4 +1,4 @@
-@extends('layouts.public')
+@extends('layouts.dashboard')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -90,15 +90,24 @@
                 @endif
 
                 {{-- CTA / status --}}
+                @php $myReg = auth()->check() ? $event->registrationFor(auth()->id()) : null; @endphp
                 @if($event->status === 'cancelled' || $event->is_closed)
                     <button disabled class="w-full px-4 py-2.5 rounded-xl bg-gray-200 text-gray-600 cursor-not-allowed">
                         Pendaftaran ditutup
                     </button>
                 @else
                     @auth
-                        <button disabled class="w-full px-4 py-2.5 rounded-xl bg-indigo-600 text-white opacity-80 cursor-not-allowed">
-                            Apply (akan diaktifkan di langkah Registrations)
-                        </button>
+                        @if(!$myReg || $myReg->status === 'cancelled')
+                            <a href="{{ route('registrations.apply.form', ['event' => $event->getKey()]) }}"
+                            class="w-full block text-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">
+                                Isi Form Apply
+                            </a>
+                        @else
+                            <a href="{{ route('registrations.show', $myReg) }}"
+                            class="block text-center w-full px-4 py-2.5 rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                            Lihat Pendaftaran Saya
+                            </a>
+                        @endif
                     @else
                         <a href="{{ route('login') }}" class="block text-center w-full px-4 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">
                             Login untuk Apply
@@ -124,3 +133,4 @@
     </div>
 </div>
 @endsection
+

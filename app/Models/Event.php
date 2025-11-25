@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -86,5 +87,15 @@ class Event extends Model
             || ($this->ends_at && $this->ends_at->isPast())
             || $full;
     }
-    
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(\App\Models\Registration::class);
+    }
+
+    public function registrationFor(?int $userId): ?\App\Models\Registration
+    {
+        if (!$userId) return null;
+        return $this->registrations()->where('user_id', $userId)->first();
+    }
 }

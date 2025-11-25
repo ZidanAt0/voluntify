@@ -8,11 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\RegistrationApplyRequest;
+
+
+
 
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Display the user's profile form.  
      */
     public function edit(Request $request): View
     {
@@ -21,20 +26,36 @@ class ProfileController extends Controller
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    
+    public function update(ProfileUpdateRequest $request): \Illuminate\Http\RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($request->only(['name','email','whatsapp','city','address','bio']));
+
+        $interests = collect(explode(',', (string) $request->input('interests')))
+                        ->map(fn($s)=>trim($s))->filter()->values()->all();
+        $user->interests = $interests ?: null;
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        // upload avatar
+        if ($request->hasFile('avatar')) {
+            $path = $request->file('avatar')->store('avatars', 'public');
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+            // hapus avatar lama jika ada
+            if ($user->avatar_path && \Storage::disk('public')->exists($user->avatar_path)) {
+            \Storage::disk('public')->delete($user->avatar_path);
+            }
+
+
+            $user->avatar_path = $path;
+        }
+
+        $user->save();
+        return back()->with('status','Profil berhasil diperbarui.');
     }
 
     /**
@@ -57,4 +78,7 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    
+
 }
