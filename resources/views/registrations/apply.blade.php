@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+<div class="max-w-4xl mx-auto px-4 sm:px-4 py-0">
     <div class="mb-6">
         <a href="{{ route('events.show', $event->slug) }}" class="text-sm text-indigo-700 hover:underline">← Kembali</a>
     </div>

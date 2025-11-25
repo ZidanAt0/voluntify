@@ -15,7 +15,10 @@
     <a href="{{ url('/') }}" class="text-xl font-semibold">Voluntify</a>
 
     <nav class="flex items-center gap-3">
+      @auth
       <a href="{{ route('events.index') }}" class="text-sm text-gray-700 hover:text-indigo-600">Explore</a>
+      <a href="{{ route('dashboard') }}" class="text-sm text-gray-700 hover:text-indigo-600">Dashboard</a>
+      @endauth
 
       @auth
       <details class="relative group">
@@ -25,10 +28,12 @@
           <svg class="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 7.5 10 12l4.5-4.5"/></svg>
         </summary>
         <div class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg ring-1 ring-gray-200 p-2 z-50">
-          <div class="px-3 py-2 text-xs text-gray-500">Masuk sebagai<br><span class="font-medium text-gray-800">{{ auth()->user()->email }}</span></div>
-          <a href="{{ route('dashboard') }}" class="block px-3 py-2 rounded-lg hover:bg-gray-50 text-sm">Dashboard</a>
-          <a href="{{ route('registrations.index') }}" class="block px-3 py-2 rounded-lg hover:bg-gray-50 text-sm">Pendaftaran Saya</a>
+        <div class="px-2 pb-0 flex items-center"><img src="{{ auth()->user()->avatar_url }}" class="w-9 h-9 rounded-full object-cover" alt="avatar">
+        <div class="px-3 py-2 text-xs text-gray-500">Masuk sebagai<br><span class="font-medium text-gray-800">{{ auth()->user()->email }}</span></div></div>
           <a href="{{ route('profile.edit') }}" class="block px-3 py-2 rounded-lg hover:bg-gray-50 text-sm">Profil</a>
+          <a href="{{ route('bookmarks.index') }}" class="block px-3 py-2 rounded-lg hover:bg-gray-50 text-sm">Bookmarks</a>
+          <a href="{{ route('registrations.index') }}" class="block px-3 py-2 rounded-lg hover:bg-gray-50 text-sm">Pendaftaran Saya</a>
+
           <form method="POST" action="{{ route('logout') }}" class="mt-1">
             @csrf
             <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-sm text-red-700">Logout</button>

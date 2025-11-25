@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\BookmarkController;
 
 
 // landing
@@ -53,6 +54,15 @@ Route::get('/events/{event}/apply', [RegistrationController::class, 'create'])
 Route::post('/events/{event}/apply', [RegistrationController::class, 'store'])
     ->middleware('auth')
     ->name('registrations.apply');
+
+// Bookmark
+Route::middleware('auth')->group(function () {
+    Route::get('/me/bookmarks', [BookmarkController::class, 'index'])->name('bookmarks.index');
+
+    // pakai slug jika Event binding by slug
+    Route::post('/events/{event}/bookmark', [BookmarkController::class, 'store'])->name('bookmarks.store');
+    Route::delete('/events/{event}/bookmark', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
+});
 
 // Auth routes (login/register/forgot/etc.)
 require __DIR__.'/auth.php';

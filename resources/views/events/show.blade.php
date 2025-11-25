@@ -90,6 +90,7 @@
                 @endif
 
                 {{-- CTA / status --}}
+                <div class="px-0 pb-0 flex items-center gap-2">
                 @php $myReg = auth()->check() ? $event->registrationFor(auth()->id()) : null; @endphp
                 @if($event->status === 'cancelled' || $event->is_closed)
                     <button disabled class="w-full px-4 py-2.5 rounded-xl bg-gray-200 text-gray-600 cursor-not-allowed">
@@ -114,6 +115,23 @@
                         </a>
                     @endauth
                 @endif
+                @auth
+                    @php $bk = auth()->user()->bookmarks->where('event_id',$event->id)->first(); @endphp
+                    <div class="gap-2">
+                        @if($bk)
+                        <form method="POST" action="{{ route('bookmarks.destroy', $event) }}">
+                            @csrf @method('DELETE')
+                            <button class="w-full px-4 py-2.5 rounded-xl border hover:bg-gray-50">★</button>
+                        </form>
+                        @else
+                        <form method="POST" action="{{ route('bookmarks.store', $event) }}">
+                            @csrf
+                            <button class="w-full px-4 py-2.5 rounded-xl border hover:bg-gray-50">☆</button>
+                        </form>
+                        @endif
+                    </div>
+                @endauth
+                </div>
             </div>
 
             {{-- Kontak organizer (email/telepon bila ada) --}}

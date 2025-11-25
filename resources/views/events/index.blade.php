@@ -48,10 +48,19 @@
 
                 <div class="p-4 flex-1">
                     <h3 class="font-semibold text-lg">{{ $e->title }}</h3>
+                    
                     <p class="text-gray-600 mt-1"
                        style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;">
                         {{ $e->excerpt ?? Str::limit(strip_tags($e->description), 100) }}
                     </p>
+
+                    @if($e->category)
+                    <div class="mt-1">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
+                        {{ $e->category->name }}
+                        </span>
+                    </div>
+                    @endif
 
                     <ul class="mt-4 space-y-2 text-sm text-gray-700">
                         <li class="flex items-center gap-2">
@@ -96,11 +105,24 @@
                     </div>
                 </div>
 
-                <div class="px-4 pb-4">
-                    <a href="{{ route('events.show', $e->slug) }}"
-                       class="block text-center w-full rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-4 py-2">
+                <div class="px-4 pb-4 flex items-center gap-2">
+                    <a href="{{ route('events.show', $e->slug) }}" class="flex-1 text-center rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-4 py-2">
                         Lihat Detail Event
                     </a>
+                    @auth
+                        @php $isBookmarked = auth()->user()->bookmarks->where('event_id',$e->id)->isNotEmpty(); @endphp
+                        @if($isBookmarked)
+                        <form method="POST" action="{{ route('bookmarks.destroy', $e) }}">
+                            @csrf @method('DELETE')
+                            <button title="Hapus Bookmark" class="px-3 py-2 rounded-xl border hover:bg-gray-50">★</button>
+                        </form>
+                        @else
+                        <form method="POST" action="{{ route('bookmarks.store', $e) }}">
+                            @csrf
+                            <button title="Simpan Event" class="px-3 py-2 rounded-xl border hover:bg-gray-50">☆</button>
+                        </form>
+                        @endif
+                    @endauth
                 </div>
             </div>
         @empty
