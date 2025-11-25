@@ -11,7 +11,7 @@
 <body class="bg-gray-50 text-gray-900">
 <header class="bg-white border-b">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-    <a href="{{ url('/') }}" class="text-xl font-semibold">VolunteerHub</a>
+    <a href="{{ url('/') }}" class="text-xl font-semibold">Voluntify</a>
     <nav class="flex items-center gap-3 text-sm">
       <span class="text-gray-600 hidden sm:inline">
         {{ Str::limit(auth()->user()->name, 24) }}
