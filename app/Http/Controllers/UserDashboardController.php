@@ -11,7 +11,22 @@ class UserDashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $userId = $request->user()->id;
+        $user = $request->user();
+
+        // ✅ REDIRECT SESUAI ROLE
+        if ($user->hasRole('admin')) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user->hasRole('organizer')) {
+            return redirect()->route('organizer.dashboard');
+        }
+
+        // =========================
+        // DI BAWAH INI KHUSUS USER / VOLUNTEER
+        // =========================
+
+        $userId = $user->id;
 
         // KPI status pendaftaran
         $regCounts = Registration::selectRaw('status, COUNT(*) as total')
@@ -23,16 +38,19 @@ class UserDashboardController extends Controller
         $approvedCount = $regCounts->get('approved', 0);
         $appliedCount  = $regCounts->get('applied', 0);
 
-        // Pendaftaran mendatang (berdasar starts_at event)
+        // Pendaftaran mendatang
         $upcomingRegs = Registration::with(['event.category'])
             ->where('user_id', $userId)
-            ->whereHas('event', fn($q) => $q->whereNotNull('starts_at')->where('starts_at','>=',now()))
+            ->whereHas('event', fn($q) => 
+                $q->whereNotNull('starts_at')
+                  ->where('starts_at','>=',now())
+            )
             ->get()
             ->sortBy(fn($r) => $r->event?->starts_at)
             ->take(5)
             ->values();
 
-        // Pendaftaran terbaru (activity)
+        // Pendaftaran terbaru
         $recentRegs = Registration::with(['event.category'])
             ->where('user_id', $userId)
             ->latest()
@@ -40,15 +58,19 @@ class UserDashboardController extends Controller
             ->get();
 
         // Bookmark terbaru
-        $bookmarkedEvents = $request->user()->bookmarkedEvents()
+        $bookmarkedEvents = $user->bookmarkedEvents()
             ->with('category')
             ->latest('bookmarks.created_at')
             ->take(6)
             ->get();
 
         return view('user.dashboard', compact(
-            'totalRegs','approvedCount','appliedCount',
-            'upcomingRegs','recentRegs','bookmarkedEvents'
+            'totalRegs',
+            'approvedCount',
+            'appliedCount',
+            'upcomingRegs',
+            'recentRegs',
+            'bookmarkedEvents'
         ));
     }
 }

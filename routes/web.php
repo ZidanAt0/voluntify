@@ -6,6 +6,7 @@ use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\UserDashboardController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Organizer\DashboardController;
 
 // Landing
 Route::view('/', 'landing')->name('home');
@@ -54,5 +55,18 @@ Route::middleware('auth')->group(function () {
     Route::post('/events/{event}/bookmark', [BookmarkController::class, 'store'])->name('bookmarks.store');
     Route::delete('/events/{event}/bookmark', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
 });
+
+Route::middleware(['auth'])
+    ->prefix('organizer')
+    ->name('organizer.')
+    ->group(function () {
+
+        Route::get('/dashboard', [DashboardController::class, 'index'])
+            ->name('dashboard');
+
+        // ✅ FIX: CRUD EVENT ORGANIZER
+        Route::resource('/events', EventController::class);
+
+    });
 
 require __DIR__.'/auth.php';
