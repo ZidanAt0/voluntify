@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\EventController;
+use App\Http\Controllers\Organizer\EventController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\UserDashboardController;
@@ -68,5 +68,14 @@ Route::middleware(['auth'])
         Route::resource('/events', EventController::class);
 
     });
+
+    Route::middleware(['auth', 'role:organizer'])
+    ->prefix('organizer')
+    ->name('organizer.')
+    ->group(function () {
+
+        Route::resource('events', \App\Http\Controllers\Organizer\EventController::class);
+    });
+
 
 require __DIR__.'/auth.php';
