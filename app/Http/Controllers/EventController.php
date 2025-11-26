@@ -21,7 +21,7 @@ class EventController extends Controller
         $events = Event::with('category')
             ->where('status', 'published')
             ->when($q, function ($query, $q) {
-                // Postgres ILIKE
+                // Postgres     
                 return $query->where(function ($qq) use ($q) {
                     $qq->whereRaw('title ILIKE ?', ["%{$q}%"])
                        ->orWhereRaw('excerpt ILIKE ?', ["%{$q}%"]);

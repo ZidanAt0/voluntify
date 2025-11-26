@@ -8,6 +8,7 @@
   <title>{{ $title ?? 'Dashboard' }}</title>
   @vite(['resources/css/app.css','resources/js/app.js'])
 </head>
+@stack('scripts')
 <body class="bg-gray-50 text-gray-900">
 
 <header class="bg-white border-b">

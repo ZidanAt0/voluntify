@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Organizer\EventController;
+use App\Http\Controllers\EventController; // ✅ UNTUK VOLUNTEER
+use App\Http\Controllers\Organizer\EventController as OrganizerEventController; // ✅ UNTUK ORGANIZER
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\UserDashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Organizer\DashboardController;
+use App\Http\Controllers\Organizer\CheckinHistoryController;
 
 // Landing
 Route::view('/', 'landing')->name('home');
@@ -56,7 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/events/{event}/bookmark', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
 });
 
-Route::middleware(['auth'])
+Route::middleware(['auth', 'role:organizer'])
     ->prefix('organizer')
     ->name('organizer.')
     ->group(function () {
@@ -64,38 +66,41 @@ Route::middleware(['auth'])
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
 
-        // ✅ FIX: CRUD EVENT ORGANIZER
-        Route::resource('/events', EventController::class);
+        Route::resource('/events', OrganizerEventController::class);
 
-    });
+        Route::post('/events/{event}/publish', [OrganizerEventController::class, 'publish'])
+            ->name('events.publish');
 
-    Route::middleware(['auth', 'role:organizer'])
-    ->prefix('organizer')
-    ->name('organizer.')
-    ->group(function () {
-        Route::post('/events/{event}/publish', [EventController::class, 'publish'])
-    ->name('events.publish');
+        Route::post('/events/{event}/unpublish', [OrganizerEventController::class, 'unpublish'])
+            ->name('events.unpublish');
 
-Route::post('/events/{event}/unpublish', [EventController::class, 'unpublish'])
-    ->name('events.unpublish');
+        // Peserta
+        Route::get('/events/{event}/participants',
+            [\App\Http\Controllers\Organizer\ParticipantController::class, 'index']
+        )->name('events.participants');
 
+        Route::post('/registrations/{registration}/approve',
+            [\App\Http\Controllers\Organizer\ParticipantController::class, 'approve']
+        )->name('registrations.approve');
 
-    Route::get('/dashboard', [\App\Http\Controllers\Organizer\DashboardController::class, 'index'])
-        ->name('dashboard');
+        Route::post('/registrations/{registration}/reject',
+            [\App\Http\Controllers\Organizer\ParticipantController::class, 'reject']
+        )->name('registrations.reject');
 
-    Route::resource('/events', \App\Http\Controllers\Organizer\EventController::class);
+        // Check-in
+        Route::get('/checkin',
+            [\App\Http\Controllers\Organizer\CheckinController::class, 'index']
+        )->name('checkin.index');
+
+        Route::post('/checkin',
+            [\App\Http\Controllers\Organizer\CheckinController::class, 'store']
+        )->name('checkin.store');
+        Route::get('/checkin-history', 
+            [CheckinHistoryController::class, 'index']
+        )->name('checkin.history');
 });
-Route::get('/organizer/events/{event}/participants',
-    [\App\Http\Controllers\Organizer\ParticipantController::class, 'index']
-)->name('organizer.events.participants');
 
-Route::post('/organizer/registrations/{registration}/approve',
-    [\App\Http\Controllers\Organizer\ParticipantController::class, 'approve']
-)->name('organizer.registrations.approve');
 
-Route::post('/organizer/registrations/{registration}/reject',
-    [\App\Http\Controllers\Organizer\ParticipantController::class, 'reject']
-)->name('organizer.registrations.reject');
 
 
 require __DIR__.'/auth.php';

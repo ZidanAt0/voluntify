@@ -19,6 +19,7 @@ return new class extends Migration {
 
             // siapkan untuk check-in (next step)
             $table->string('checkin_code', 64)->nullable()->unique();
+            $table->timestamp('checked_in_at')->nullable();
 
             $table->timestamps();
 

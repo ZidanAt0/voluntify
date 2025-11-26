@@ -22,15 +22,17 @@ class ParticipantController extends Controller
         return view('organizer.participants.index', compact('event', 'registrations'));
     }
 
-    // APPROVE
     public function approve(Registration $registration)
-    {
-        if ($registration->event->organizer_id !== auth()->id()) abort(403);
+{
+    if ($registration->event->organizer_id !== auth()->id()) abort(403);
 
-        $registration->update(['status' => 'approved']);
+    $registration->update([
+        'status' => 'approved',
+        'checkin_code' => \Str::uuid(), // kode unik untuk QR
+    ]);
 
-        return back()->with('success', 'Peserta disetujui');
-    }
+    return back()->with('success', 'Peserta disetujui & QR dibuat');
+}
 
     // REJECT
     public function reject(Registration $registration)

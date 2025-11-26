@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\Registration;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use App\Http\Requests\RegistrationApplyRequest;
 
 
@@ -59,16 +58,20 @@ class RegistrationController extends Controller
         // unset($answers['agree']);
 
         if ($existing) {
-            $existing->update([
-                'status'      => 'applied',
-                'applied_at'  => now(),
-                'cancelled_at'=> null,
-                'answers'     => $answers,
-            ]);
-            $event->increment('registration_count');
-            return redirect()->route('registrations.show', $existing)
-                ->with('status', 'Pendaftaran diaktifkan kembali.');
-        }
+    $existing->update([
+        'status'       => 'applied',
+        'applied_at'   => now(),
+        'cancelled_at' => null,
+        'answers'      => $answers,
+        'checkin_code' => (string) random_int(100000, 999999),
+    ]);
+
+    $event->increment('registration_count');
+
+    return redirect()->route('registrations.show', $existing)
+        ->with('status', 'Pendaftaran diaktifkan kembali.');
+}
+
 
         $reg = Registration::create([
             'event_id' => $event->id,
@@ -76,6 +79,7 @@ class RegistrationController extends Controller
             'status'   => 'applied',
             'applied_at' => now(),
             'answers'  => $answers,
+            'checkin_code' => (string) random_int(100000, 999999),
         ]);
 
         $event->increment('registration_count');

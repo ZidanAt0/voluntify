@@ -44,5 +44,10 @@ class User extends Authenticatable
         return $this->belongsToMany(\App\Models\Event::class, 'bookmarks')
                     ->withPivot('created_at')->withTimestamps();
     }
+    public function events()
+{
+    return $this->hasMany(\App\Models\Event::class, 'organizer_id');
+}
+
 
 }
