@@ -74,8 +74,12 @@ Route::middleware(['auth'])
     ->name('organizer.')
     ->group(function () {
 
-        Route::resource('events', \App\Http\Controllers\Organizer\EventController::class);
-    });
+    Route::get('/dashboard', [\App\Http\Controllers\Organizer\DashboardController::class, 'index'])
+        ->name('dashboard');
+
+    Route::resource('/events', \App\Http\Controllers\Organizer\EventController::class);
+});
+
 
 
 require __DIR__.'/auth.php';

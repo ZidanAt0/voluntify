@@ -4,68 +4,124 @@ namespace App\Http\Controllers\Organizer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
-use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
-    // =========================
-    // TAMPILKAN LIST EVENT ORGANIZER
-    // =========================
     public function index()
     {
         $events = Event::where('organizer_id', auth()->id())
             ->latest()
-            ->get();
+            ->paginate(10);
 
         return view('organizer.events.index', compact('events'));
     }
 
-    // =========================
-    // FORM TAMBAH EVENT
-    // =========================
     public function create()
     {
-        $categories = Category::all();
-        return view('organizer.events.create', compact('categories'));
+        return view('organizer.events.create');
     }
 
-    // =========================
-    // SIMPAN EVENT (INI YANG TADI ERROR REDIRECT)
-    // =========================
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'title'          => 'required|string|max:255',
-            'excerpt'        => 'nullable|string',
-            'description'    => 'nullable|string',
-
-            'location_type' => 'required|in:onsite,online,hybrid',
-            'city'          => 'nullable|string|max:100',
-            'address'       => 'nullable|string|max:255',
-
-            'starts_at'     => 'required|date',
-            'ends_at'       => 'required|date|after:starts_at',
-
-            'capacity'      => 'nullable|integer|min:1',
-            'status'        => 'required|in:draft,published,closed,cancelled',
-
-            'category_id'   => 'nullable|exists:categories,id',
-            'banner_path'   => 'nullable|string',
+        $request->validate([
+            'title'       => 'required|max:255',
+            'description' => 'nullable',
+            'starts_at'   => 'required|date',
+            'ends_at'     => 'required|date|after_or_equal:starts_at',
+            'capacity'    => 'nullable|integer|min:1',
+            'banner'      => 'nullable|image|max:2048',
         ]);
 
-        // WAJIB SESUAI DB
-        $data['organizer_id'] = auth()->id();
-        $data['slug'] = Str::slug($data['title']) . '-' . uniqid();
-        $data['published_at'] = $data['status'] === 'published'
-            ? now()
-            : null;
+        // Upload banner
+        $bannerPath = null;
+        if ($request->hasFile('banner')) {
+            $bannerPath = $request->file('banner')->store('banners', 'public');
+        }
 
-        Event::create($data);
+        Event::create([
+            'organizer_id' => auth()->id(),
+            'category_id'  => null, // optional for now
+            'title'        => $request->title,
+            'slug'         => Str::slug($request->title).'-'.uniqid(),
+            'excerpt'      => Str::limit(strip_tags($request->description), 150),
+            'description'  => $request->description,
+            'location_type'=> 'onsite',
+            'city'         => null,
+            'address'      => null,
+            'starts_at'    => $request->starts_at,
+            'ends_at'      => $request->ends_at,
+            'capacity'     => $request->capacity,
+            'banner_path'  => $bannerPath,
+            'status'       => 'draft',
+        ]);
 
-        // ✅ INI YANG MEMPERBAIKI MASALAHMU
         return redirect()->route('organizer.events.index')
-            ->with('success', 'Event berhasil dibuat!');
+            ->with('success', 'Event berhasil dibuat.');
+    }
+
+    public function edit(Event $event)
+    {
+        $this->authorizeEvent($event);
+
+        return view('organizer.events.edit', compact('event'));
+    }
+
+    public function update(Request $request, Event $event)
+    {
+        $this->authorizeEvent($event);
+
+        $request->validate([
+            'title'       => 'required|max:255',
+            'description' => 'nullable',
+            'starts_at'   => 'required|date',
+            'ends_at'     => 'required|date|after_or_equal:starts_at',
+            'capacity'    => 'nullable|integer|min:1',
+            'banner'      => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->hasFile('banner')) {
+            if ($event->banner_path) {
+                Storage::disk('public')->delete($event->banner_path);
+            }
+
+            $event->banner_path = $request->file('banner')->store('banners', 'public');
+        }
+
+        $event->update([
+            'title'        => $request->title,
+            'slug'         => Str::slug($request->title).'-'.uniqid(),
+            'excerpt'      => Str::limit(strip_tags($request->description), 150),
+            'description'  => $request->description,
+            'starts_at'    => $request->starts_at,
+            'ends_at'      => $request->ends_at,
+            'capacity'     => $request->capacity,
+        ]);
+
+        return redirect()->route('organizer.events.index')
+            ->with('success', 'Event berhasil diperbarui.');
+    }
+
+    public function destroy(Event $event)
+    {
+        $this->authorizeEvent($event);
+
+        if ($event->banner_path) {
+            Storage::disk('public')->delete($event->banner_path);
+        }
+
+        $event->delete();
+
+        return redirect()->route('organizer.events.index')
+            ->with('success', 'Event berhasil dihapus.');
+    }
+
+    private function authorizeEvent(Event $event)
+    {
+        if ($event->organizer_id !== auth()->id()) {
+            abort(403, 'Tidak punya akses');
+        }
     }
 }
