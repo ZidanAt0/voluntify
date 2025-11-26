@@ -73,13 +73,29 @@ Route::middleware(['auth'])
     ->prefix('organizer')
     ->name('organizer.')
     ->group(function () {
+        Route::post('/events/{event}/publish', [EventController::class, 'publish'])
+    ->name('events.publish');
+
+Route::post('/events/{event}/unpublish', [EventController::class, 'unpublish'])
+    ->name('events.unpublish');
+
 
     Route::get('/dashboard', [\App\Http\Controllers\Organizer\DashboardController::class, 'index'])
         ->name('dashboard');
 
     Route::resource('/events', \App\Http\Controllers\Organizer\EventController::class);
 });
+Route::get('/organizer/events/{event}/participants',
+    [\App\Http\Controllers\Organizer\ParticipantController::class, 'index']
+)->name('organizer.events.participants');
 
+Route::post('/organizer/registrations/{registration}/approve',
+    [\App\Http\Controllers\Organizer\ParticipantController::class, 'approve']
+)->name('organizer.registrations.approve');
+
+Route::post('/organizer/registrations/{registration}/reject',
+    [\App\Http\Controllers\Organizer\ParticipantController::class, 'reject']
+)->name('organizer.registrations.reject');
 
 
 require __DIR__.'/auth.php';

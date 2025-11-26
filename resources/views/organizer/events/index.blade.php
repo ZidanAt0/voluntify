@@ -32,13 +32,34 @@
                 <td>{{ ucfirst($event->status) }}</td>
                 <td class="p-3 text-center space-x-2">
 
-    <!-- ✅ TOMBOL EDIT -->
+    <!-- ✅ EDIT -->
     <a href="{{ route('organizer.events.edit', $event->id) }}"
        class="px-3 py-1 text-sm bg-yellow-400 text-black rounded hover:bg-yellow-500">
         Edit
     </a>
 
-    <!-- ✅ TOMBOL HAPUS -->
+    <!-- ✅ PUBLISH / UNPUBLISH -->
+    @if($event->status === 'draft')
+        <form method="POST"
+              action="{{ route('organizer.events.publish', $event->id) }}"
+              class="inline">
+            @csrf
+            <button class="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">
+                Publish
+            </button>
+        </form>
+    @else
+        <form method="POST"
+              action="{{ route('organizer.events.unpublish', $event->id) }}"
+              class="inline">
+            @csrf
+            <button class="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700">
+                Unpublish
+            </button>
+        </form>
+    @endif
+
+    <!-- ✅ HAPUS -->
     <form method="POST"
           action="{{ route('organizer.events.destroy', $event->id) }}"
           class="inline"
@@ -49,8 +70,14 @@
             Hapus
         </button>
     </form>
+    <a href="{{ route('organizer.events.participants', $event->id) }}"
+   class="px-3 py-1 text-sm bg-blue-500 text-white rounded">
+   Peserta
+</a>
+
 
 </td>
+
 
             </tr>
             @empty
