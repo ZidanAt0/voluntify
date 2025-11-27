@@ -18,7 +18,7 @@ class BookmarkController extends Controller
             ->bookmarkedEvents()                         // relasi belongsToMany
             ->with(['category'])                         // untuk badge kategori
             ->when($categoryId, fn($qq) => $qq->where('category_id', $categoryId))
-            ->when($q, fn($qq) => $qq->where('title','like','%'.$q.'%'));
+            ->when($q, fn($qq) => $qq->where('title', 'like', '%' . $q . '%'));
 
         // urutkan
         if ($sort === 'soon') {
@@ -29,21 +29,21 @@ class BookmarkController extends Controller
 
         $events = $query->paginate(12)->withQueryString();
 
-        $categories = \App\Models\Category::orderBy('name')->get(['id','name']);
+        $categories = \App\Models\Category::orderBy('name')->get(['id', 'name']);
 
-        return view('bookmarks.index', compact('events','q','categoryId','sort','categories'));
+        return view('bookmarks.index', compact('events', 'q', 'categoryId', 'sort', 'categories'));
     }
 
 
     public function store(Request $request, Event $event)
     {
         $request->user()->bookmarks()->firstOrCreate(['event_id' => $event->id]);
-        return back()->with('status','Event disimpan.');
+        return back()->with('status', 'Event disimpan.');
     }
 
     public function destroy(Request $request, Event $event)
     {
         $request->user()->bookmarks()->where('event_id', $event->id)->delete();
-        return back()->with('status','Bookmark dihapus.');
+        return back()->with('status', 'Bookmark dihapus.');
     }
 }

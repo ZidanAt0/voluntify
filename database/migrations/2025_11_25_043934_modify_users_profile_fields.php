@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::table('users', function (Blueprint $table) {
             if (Schema::hasColumn('users', 'phone')) {
                 $table->dropColumn('phone');
@@ -14,7 +15,8 @@ return new class extends Migration {
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::table('users', function (Blueprint $table) {
             $table->string('phone', 30)->nullable();
             $table->dropColumn('address');

@@ -24,15 +24,15 @@ class ProfileController extends Controller
         ]);
     }
 
-    
+
     public function update(ProfileUpdateRequest $request): \Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
 
-        $user->fill($request->only(['name','email','whatsapp','city','address','bio']));
+        $user->fill($request->only(['name', 'email', 'whatsapp', 'city', 'address', 'bio']));
 
         $interests = collect(explode(',', (string) $request->input('interests')))
-                        ->map(fn($s)=>trim($s))->filter()->values()->all();
+            ->map(fn($s) => trim($s))->filter()->values()->all();
         $user->interests = $interests ?: null;
 
         if ($user->isDirty('email')) {
@@ -45,7 +45,7 @@ class ProfileController extends Controller
 
             // hapus avatar lama jika ada
             if ($user->avatar_path && \Storage::disk('public')->exists($user->avatar_path)) {
-            \Storage::disk('public')->delete($user->avatar_path);
+                \Storage::disk('public')->delete($user->avatar_path);
             }
 
 
@@ -53,7 +53,7 @@ class ProfileController extends Controller
         }
 
         $user->save();
-        return back()->with('status','Profil berhasil diperbarui.');
+        return back()->with('status', 'Profil berhasil diperbarui.');
     }
 
     /**
@@ -76,7 +76,4 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
-
-    
-
 }

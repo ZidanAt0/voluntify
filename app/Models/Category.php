@@ -10,7 +10,7 @@ class Category extends Model
 {
     use HasFactory; // boleh dipakai; tidak masalah kalau tidak dipanggil
 
-    protected $fillable = ['name','slug'];
+    protected $fillable = ['name', 'slug'];
 
     public function events(): HasMany
     {

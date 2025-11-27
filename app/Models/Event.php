@@ -40,14 +40,20 @@ class Event extends Model
     ];
 
     // Relasi
-    public function category(): BelongsTo { return $this->belongsTo(Category::class); }
-    public function organizer(): BelongsTo { return $this->belongsTo(User::class, 'organizer_id'); }
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+    public function organizer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'organizer_id');
+    }
 
     // Accessor banner URL
     public function getBannerUrlAttribute(): string
     {
         if ($this->banner_path) {
-            if (Str::startsWith($this->banner_path, ['http://','https://'])) {
+            if (Str::startsWith($this->banner_path, ['http://', 'https://'])) {
                 return $this->banner_path;
             }
             return Storage::url($this->banner_path);
@@ -63,7 +69,7 @@ class Event extends Model
         return $this->status === 'published' && $timeOk && $capOk;
     }
 
-        // === Helper tampilan ===
+    // === Helper tampilan ===
     public function getDateHumanAttribute(): string
     {
         return $this->starts_at?->locale('id')->translatedFormat('d F Y') ?? '';

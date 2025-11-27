@@ -35,6 +35,17 @@ class RegistrationController extends Controller
             'user'  => $request->user(),
         ]);
     }
+    public function downloadCertificate(Registration $registration)
+    {
+        $this->authorize('own', $registration);
+
+        if ($registration->status !== 'completed' || !$registration->certificate_path) {
+            return back()->with('status', 'Sertifikat belum tersedia.');
+        }
+
+        return \Storage::download('public/' . $registration->certificate_path);
+    }
+
 
     // Simpan apply
     public function store(RegistrationApplyRequest $request, Event $event)
@@ -58,19 +69,19 @@ class RegistrationController extends Controller
         // unset($answers['agree']);
 
         if ($existing) {
-    $existing->update([
-        'status'       => 'applied',
-        'applied_at'   => now(),
-        'cancelled_at' => null,
-        'answers'      => $answers,
-        'checkin_code' => (string) random_int(100000, 999999),
-    ]);
+            $existing->update([
+                'status'       => 'applied',
+                'applied_at'   => now(),
+                'cancelled_at' => null,
+                'answers'      => $answers,
+                'checkin_code' => (string) random_int(100000, 999999),
+            ]);
 
-    $event->increment('registration_count');
+            $event->increment('registration_count');
 
-    return redirect()->route('registrations.show', $existing)
-        ->with('status', 'Pendaftaran diaktifkan kembali.');
-}
+            return redirect()->route('registrations.show', $existing)
+                ->with('status', 'Pendaftaran diaktifkan kembali.');
+        }
 
 
         $reg = Registration::create([
@@ -124,8 +135,10 @@ class RegistrationController extends Controller
         $regs = \App\Models\Registration::with(['event.category'])
             ->where('user_id', $request->user()->id)
             ->when($status, fn($qq) => $qq->where('status', $status))
-            ->when($q, fn($qq) => $qq->whereHas('event', fn($ee) =>
-                $ee->where('title', 'like', '%'.$q.'%')
+            ->when($q, fn($qq) => $qq->whereHas(
+                'event',
+                fn($ee) =>
+                $ee->where('title', 'like', '%' . $q . '%')
             ))
             ->latest()
             ->paginate(9)
@@ -134,10 +147,10 @@ class RegistrationController extends Controller
         $counts = \App\Models\Registration::selectRaw('status, COUNT(*) as total')
             ->where('user_id', $request->user()->id)
             ->groupBy('status')
-            ->pluck('total','status')
+            ->pluck('total', 'status')
             ->all();
 
-        return view('registrations.index', compact('regs','status','q','counts'));
+        return view('registrations.index', compact('regs', 'status', 'q', 'counts'));
     }
 
 

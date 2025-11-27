@@ -41,9 +41,11 @@ class UserDashboardController extends Controller
         // Pendaftaran mendatang
         $upcomingRegs = Registration::with(['event.category'])
             ->where('user_id', $userId)
-            ->whereHas('event', fn($q) => 
+            ->whereHas(
+                'event',
+                fn($q) =>
                 $q->whereNotNull('starts_at')
-                  ->where('starts_at','>=',now())
+                    ->where('starts_at', '>=', now())
             )
             ->get()
             ->sortBy(fn($r) => $r->event?->starts_at)
