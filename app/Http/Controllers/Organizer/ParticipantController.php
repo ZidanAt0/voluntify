@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Organizer;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Registration;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class ParticipantController extends Controller
 {
@@ -23,16 +25,16 @@ class ParticipantController extends Controller
     }
 
     public function approve(Registration $registration)
-{
-    if ($registration->event->organizer_id !== auth()->id()) abort(403);
+    {
+        if ($registration->event->organizer_id !== auth()->id()) abort(403);
 
-    $registration->update([
-        'status' => 'approved',
-        'checkin_code' => \Str::uuid(), // kode unik untuk QR
-    ]);
+        $registration->update([
+            'status' => 'approved',
+            'checkin_code' => \Str::uuid(), // kode unik untuk QR
+        ]);
 
-    return back()->with('success', 'Peserta disetujui & QR dibuat');
-}
+        return back()->with('success', 'Peserta disetujui & QR dibuat');
+    }
 
     // REJECT
     public function reject(Registration $registration)
@@ -42,5 +44,40 @@ class ParticipantController extends Controller
         $registration->update(['status' => 'rejected']);
 
         return back()->with('success', 'Peserta ditolak');
+    }
+
+    public function complete(Registration $registration)
+    {
+        // ✅ 1. Pastikan hanya organizer pemilik event
+        if ($registration->event->organizer_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // ✅ 2. WAJIB SUDAH CHECK-IN
+        if ($registration->status !== 'checked_in') {
+            return back()->with('error', 'Peserta belum check-in. Tidak bisa diselesaikan.');
+        }
+
+        // ✅ 3. Update ke completed
+        $registration->update([
+            'status' => 'completed',
+        ]);
+
+        // ✅ 4. Generate sertifikat PDF
+        $pdf = Pdf::loadView('certificates.template', [
+            'registration' => $registration
+        ]);
+
+        $filename = 'certificate-' . $registration->id . '.pdf';
+        $path = 'certificates/' . $filename;
+
+        Storage::put('public/' . $path, $pdf->output());
+
+        // ✅ 5. Simpan path sertifikat
+        $registration->update([
+            'certificate_path' => $path
+        ]);
+
+        return back()->with('success', '✅ Peserta diselesaikan & sertifikat berhasil dibuat');
     }
 }

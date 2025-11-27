@@ -23,7 +23,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Dashboard per role (user/organizer/admin)
-Route::middleware(['auth','verified'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
 
     Route::middleware('role:organizer')->prefix('organizer')->name('organizer.')->group(function () {
@@ -58,6 +58,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/events/{event}/bookmark', [BookmarkController::class, 'store'])->name('bookmarks.store');
     Route::delete('/events/{event}/bookmark', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
 });
+Route::middleware('auth')->get(
+    '/me/registrations/{registration}/certificate',
+    [\App\Http\Controllers\RegistrationController::class, 'downloadCertificate']
+)->name('registrations.certificate');
+
 
 Route::middleware(['auth', 'role:organizer'])
     ->prefix('organizer')
@@ -76,35 +81,43 @@ Route::middleware(['auth', 'role:organizer'])
             ->name('events.unpublish');
 
         // Peserta
-        Route::get('/events/{event}/participants',
+        Route::get(
+            '/events/{event}/participants',
             [\App\Http\Controllers\Organizer\ParticipantController::class, 'index']
         )->name('events.participants');
 
-        Route::post('/registrations/{registration}/approve',
+        Route::post(
+            '/registrations/{registration}/approve',
             [\App\Http\Controllers\Organizer\ParticipantController::class, 'approve']
         )->name('registrations.approve');
 
-        Route::post('/registrations/{registration}/reject',
+        Route::post(
+            '/registrations/{registration}/reject',
             [\App\Http\Controllers\Organizer\ParticipantController::class, 'reject']
         )->name('registrations.reject');
 
         // Check-in
-        Route::get('/checkin',
+        Route::get(
+            '/checkin',
             [\App\Http\Controllers\Organizer\CheckinController::class, 'index']
         )->name('checkin.index');
 
-        Route::post('/checkin',
+        Route::post(
+            '/checkin',
             [\App\Http\Controllers\Organizer\CheckinController::class, 'store']
         )->name('checkin.store');
-        Route::get('/checkin-history', 
+        Route::get(
+            '/checkin-history',
             [CheckinHistoryController::class, 'index']
         )->name('checkin.history');
-        Route::get('/statistics', 
+        Route::get(
+            '/statistics',
             [StatisticController::class, 'index']
         )->name('statistics');
-});
+        Route::post(
+            '/registrations/{registration}/complete',
+            [\App\Http\Controllers\Organizer\ParticipantController::class, 'complete']
+        )->name('registrations.complete');
+    });
 
-
-
-
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

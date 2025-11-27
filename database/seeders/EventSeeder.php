@@ -28,7 +28,7 @@ class EventSeeder extends Seeder
 
         Event::factory()
             ->count(20)
-            ->state(fn () => [
+            ->state(fn() => [
                 'organizer_id' => $organizer->id,
                 'category_id'  => $categories->random()->id,
             ])
