@@ -3,52 +3,54 @@
 namespace App\Http\Controllers\Organizer;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Registration;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
-    {
-        $user = $request->user();
+    public function index()
+{
+    $organizerId = auth()->id();
 
-        // ✅ TOTAL EVENT YANG DIBUAT ORGANIZER
-        $totalEvents = Event::where('organizer_id', $user->id)->count();
+    $eventIds = Event::where('organizer_id', $organizerId)->pluck('id');
 
-        // ✅ TOTAL PENDAFTAR KE SEMUA EVENT ORGANIZER
-        $totalRegistrations = Registration::whereHas('event', function ($q) use ($user) {
-            $q->where('organizer_id', $user->id);
-        })->count();
+    $totalEvents      = Event::where('organizer_id', $organizerId)->count();
+    $totalRegistrants = Registration::whereIn('event_id', $eventIds)->count();
+    $totalApproved    = Registration::whereIn('event_id', $eventIds)->where('status','approved')->count();
+    $totalCheckedIn   = Registration::whereIn('event_id', $eventIds)->where('status','checked_in')->count();
+    $totalCancelled   = Registration::whereIn('event_id', $eventIds)->where('status','cancelled')->count();
 
-        // ✅ EVENT YANG MASIH AKTIF (PUBLISHED)
-        $activeEvents = Event::where('organizer_id', $user->id)
-            ->where('status', 'published')
-            ->count();
+    $eventStats = Event::where('organizer_id', $organizerId)
+        ->withCount([
+            'registrations',
+            'registrations as approved_count' => fn($q) => $q->where('status','approved'),
+            'registrations as checkin_count'  => fn($q) => $q->where('status','checked_in'),
+        ])
+        ->latest()
+        ->get();
 
-        // ✅ EVENT AKAN DATANG
-        $upcomingEvents = Event::where('organizer_id', $user->id)
-            ->whereNotNull('starts_at')
-            ->where('starts_at', '>=', now())
-            ->orderBy('starts_at')
-            ->take(5)
-            ->get();
+    $upcomingEvents = Event::where('organizer_id', $organizerId)
+        ->where('starts_at', '>=', now())
+        ->orderBy('starts_at')
+        ->take(5)
+        ->get();
 
-        // ✅ PENDAFTAR TERBARU KE EVENT ORGANIZER
-        $recentRegistrations = Registration::with(['user', 'event'])
-            ->whereHas('event', function ($q) use ($user) {
-                $q->where('organizer_id', $user->id);
-            })
-            ->latest()
-            ->take(5)
-            ->get();
+    $recentRegistrations = Registration::with(['user','event'])
+        ->whereIn('event_id', $eventIds)
+        ->latest()
+        ->take(5)
+        ->get();
 
-        return view('organizer.dashboard', compact(
-            'totalEvents',
-            'totalRegistrations',
-            'activeEvents',
-            'upcomingEvents',
-            'recentRegistrations'
-        ));
-    }
+    return view('organizer.dashboard', compact(
+        'totalEvents',
+        'totalRegistrants',
+        'totalApproved',
+        'totalCheckedIn',
+        'totalCancelled',
+        'eventStats',
+        'upcomingEvents',
+        'recentRegistrations'
+    ));
+}
+
 }

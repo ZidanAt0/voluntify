@@ -9,6 +9,7 @@ use App\Http\Controllers\UserDashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Organizer\DashboardController;
 use App\Http\Controllers\Organizer\CheckinHistoryController;
+use App\Http\Controllers\Organizer\StatisticController;
 
 // Landing
 Route::view('/', 'landing')->name('home');
@@ -98,6 +99,9 @@ Route::middleware(['auth', 'role:organizer'])
         Route::get('/checkin-history', 
             [CheckinHistoryController::class, 'index']
         )->name('checkin.history');
+        Route::get('/statistics', 
+            [StatisticController::class, 'index']
+        )->name('statistics');
 });
 
 
