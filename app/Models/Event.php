@@ -28,6 +28,8 @@ class Event extends Model
     // Relasi
     public function category(): BelongsTo { return $this->belongsTo(Category::class); }
     public function organizer(): BelongsTo { return $this->belongsTo(User::class, 'organizer_id'); }
+    public function bookmarkedBy(){ return $this->belongsToMany(\App\Models\User::class,'bookmarks'); }
+
 
     // Accessor banner URL
     public function getBannerUrlAttribute(): string
