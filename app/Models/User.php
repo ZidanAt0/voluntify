@@ -43,6 +43,11 @@ class User extends Authenticatable
             : 'https://placehold.co/96x96?text=' . (trim($this->name ? mb_substr($this->name, 0, 1) : 'U'));
     }
 
+    public function isSuspended(): bool
+    {
+        return !is_null($this->suspended_at);
+    }
+
 
     public function registrations()
     {
