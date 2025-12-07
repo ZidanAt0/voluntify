@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Category;
+use Carbon\Carbon;
 
 class EventController extends Controller
 {
@@ -31,10 +32,16 @@ class EventController extends Controller
     {
         $request->validate([
             'title'       => 'required|max:255',
+            'excerpt'     => 'nullable|string|max:255',
             'description' => 'nullable',
-            'starts_at'   => 'required|date',
-            'ends_at'     => 'required|date|after_or_equal:starts_at',
+            'category_id' => 'nullable|exists:categories,id',
+            'location_type'=> 'required|in:onsite,online,hybrid',
+            'city'        => 'nullable|string|max:255',
+            'address'     => 'nullable|string|max:255',
+            'starts_at'   => 'required|date|after:now',
+            'ends_at'     => 'required|date|after:starts_at',
             'capacity'    => 'nullable|integer|min:1',
+            'status'      => 'required|in:draft,published,closed,cancelled',
             'banner'      => 'nullable|image|max:2048',
         ]);
 
@@ -44,21 +51,25 @@ class EventController extends Controller
             $bannerPath = $request->file('banner')->store('banners', 'public');
         }
 
+        $excerpt = $request->filled('excerpt')
+            ? $request->excerpt
+            : Str::limit(strip_tags($request->description), 150);
+
         Event::create([
             'organizer_id' => auth()->id(),
-            'category_id'  => null, // optional for now
+            'category_id'  => $request->category_id,
             'title'        => $request->title,
             'slug'         => Str::slug($request->title).'-'.uniqid(),
-            'excerpt'      => Str::limit(strip_tags($request->description), 150),
+            'excerpt'      => $excerpt,
             'description'  => $request->description,
-            'location_type'=> 'onsite',
-            'city'         => null,
-            'address'      => null,
+            'location_type'=> $request->location_type,
+            'city'         => $request->city,
+            'address'      => $request->address,
             'starts_at'    => $request->starts_at,
             'ends_at'      => $request->ends_at,
             'capacity'     => $request->capacity,
             'banner_path'  => $bannerPath,
-            'status'       => 'draft',
+            'status'       => $request->status,
         ]);
 
         return redirect()->route('organizer.events.index')
@@ -106,16 +117,43 @@ public function unpublish(Event $event)
 
     $data = $request->validate([
         'title' => 'required|string',
+        'excerpt' => 'nullable|string|max:255',
         'description' => 'nullable',
-        'starts_at' => 'required|date',
+        'starts_at' => 'required|date|after:now',
         'ends_at' => 'required|date|after:starts_at',
-        'capacity' => 'nullable|integer',
+        'capacity' => 'nullable|integer|min:1',
         'category_id' => 'nullable|exists:categories,id',
-        'city' => 'nullable|string',
-        'address' => 'nullable|string',
+        'city' => 'nullable|string|max:255',
+        'address' => 'nullable|string|max:255',
+        'location_type' => 'required|in:onsite,online,hybrid',
+        'status' => 'required|in:draft,published,closed,cancelled',
+        'banner' => 'nullable|image|max:2048',
+        'remove_banner' => 'nullable|boolean',
     ]);
 
-    $data['slug'] = \Str::slug($data['title']);
+    $startsAt = Carbon::parse($data['starts_at']);
+    $endsAt = Carbon::parse($data['ends_at']);
+    if ($startsAt->isPast() || $endsAt->isPast()) {
+        return back()
+            ->with('error', 'Event tidak dapat diperbarui karena jadwal sudah lewat.')
+            ->withInput();
+    }
+
+    $data['excerpt'] = $data['excerpt'] ?? Str::limit(strip_tags($request->description), 150);
+    $data['slug'] = \Str::slug($data['title']).'-'.$event->id;
+
+    // Banner update
+    if ($request->boolean('remove_banner') && $event->banner_path) {
+        Storage::disk('public')->delete($event->banner_path);
+        $data['banner_path'] = null;
+    }
+
+    if ($request->hasFile('banner')) {
+        if ($event->banner_path) {
+            Storage::disk('public')->delete($event->banner_path);
+        }
+        $data['banner_path'] = $request->file('banner')->store('banners', 'public');
+    }
 
     $event->update($data);
 

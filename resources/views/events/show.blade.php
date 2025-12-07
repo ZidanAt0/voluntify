@@ -2,6 +2,17 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    @if (session('status'))
+        <div class="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+            {{ session('status') }}
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- Banner --}}
     <img src="{{ $event->banner_url }}" alt="{{ $event->title }}" class="w-full h-60 sm:h-72 object-cover rounded-2xl">
 
@@ -151,4 +162,3 @@
     </div>
 </div>
 @endsection
-

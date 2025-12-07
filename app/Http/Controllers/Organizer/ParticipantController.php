@@ -58,6 +58,11 @@ class ParticipantController extends Controller
             return back()->with('error', 'Peserta belum check-in. Tidak bisa diselesaikan.');
         }
 
+        // ✅ 2b. Pastikan library PDF tersedia
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            return back()->with('error', 'Fitur sertifikat belum aktif (package barryvdh/laravel-dompdf belum terpasang).');
+        }
+
         // ✅ 3. Update ke completed
         $registration->update([
             'status' => 'completed',
