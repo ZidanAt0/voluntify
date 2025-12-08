@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.dashboard')
 
 @section('content')
 <div class="bg-gradient-to-r from-indigo-600 to-sky-500 text-white rounded-3xl p-8 shadow-lg">
