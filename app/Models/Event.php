@@ -14,28 +14,52 @@ class Event extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'organizer_id','category_id','title','slug','excerpt','description',
-        'location_type','city','address','starts_at','ends_at',
-        'capacity','registration_count','status','published_at','banner_path',
+        'organizer_id',
+        'category_id',
+        'title',
+        'slug',
+        'excerpt',
+        'description',
+        'location_type',
+        'city',
+        'address',
+        'starts_at',
+        'ends_at',
+        'capacity',
+        'registration_count',
+        'status',
+        'published_at',
+        'banner_path',
+        'review_status',
+        'reviewed_by_id',
+        'approved_at',
+        'rejected_at',
     ];
+
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'published_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     // Relasi
-    public function category(): BelongsTo { return $this->belongsTo(Category::class); }
-    public function organizer(): BelongsTo { return $this->belongsTo(User::class, 'organizer_id'); }
-    public function bookmarkedBy(){ return $this->belongsToMany(\App\Models\User::class,'bookmarks'); }
-
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+    public function organizer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'organizer_id');
+    }
 
     // Accessor banner URL
     public function getBannerUrlAttribute(): string
     {
         if ($this->banner_path) {
-            if (Str::startsWith($this->banner_path, ['http://','https://'])) {
+            if (Str::startsWith($this->banner_path, ['http://', 'https://'])) {
                 return $this->banner_path;
             }
             return Storage::url($this->banner_path);
@@ -51,7 +75,7 @@ class Event extends Model
         return $this->status === 'published' && $timeOk && $capOk;
     }
 
-        // === Helper tampilan ===
+    // === Helper tampilan ===
     public function getDateHumanAttribute(): string
     {
         return $this->starts_at?->locale('id')->translatedFormat('d F Y') ?? '';
@@ -99,5 +123,11 @@ class Event extends Model
     {
         if (!$userId) return null;
         return $this->registrations()->where('user_id', $userId)->first();
+    }
+
+    // Scope review pending
+    public function scopePending($query)
+    {
+        return $query->where('review_status', 'pending');
     }
 }

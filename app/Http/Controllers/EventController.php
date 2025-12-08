@@ -21,35 +21,37 @@ class EventController extends Controller
         $events = Event::with('category')
             ->where('status', 'published')
             ->when($q, function ($query, $q) {
-                // Postgres ILIKE
+                // Postgres     
                 return $query->where(function ($qq) use ($q) {
                     $qq->whereRaw('title ILIKE ?', ["%{$q}%"])
-                       ->orWhereRaw('excerpt ILIKE ?', ["%{$q}%"]);
+                        ->orWhereRaw('excerpt ILIKE ?', ["%{$q}%"]);
                 });
             })
             ->when($category, function ($query, $slug) {
                 $query->whereHas('category', fn($c) => $c->where('slug', $slug));
             })
-            ->when($city, fn($query, $city) =>
+            ->when(
+                $city,
+                fn($query, $city) =>
                 $query->whereRaw('city ILIKE ?', ["%{$city}%"])
             )
             ->when($from, fn($query, $d) => $query->whereDate('starts_at', '>=', $d))
             ->when($to, fn($query, $d) => $query->whereDate('starts_at', '<=', $d))
             ->when($status === 'open', function ($query) {
                 $query->where('ends_at', '>', now())
-                      ->where(function ($qq) {
-                          $qq->whereNull('capacity')
-                             ->orWhereColumn('registration_count', '<', 'capacity');
-                      });
+                    ->where(function ($qq) {
+                        $qq->whereNull('capacity')
+                            ->orWhereColumn('registration_count', '<', 'capacity');
+                    });
             })
             ->when($status === 'closed', function ($query) {
                 $query->where(function ($qq) {
                     $qq->where('ends_at', '<=', now())
-                       ->orWhere(function ($q2) {
-                           $q2->whereNotNull('capacity')
-                              ->whereColumn('registration_count', '>=', 'capacity');
-                       })
-                       ->orWhere('status', 'closed');
+                        ->orWhere(function ($q2) {
+                            $q2->whereNotNull('capacity')
+                                ->whereColumn('registration_count', '>=', 'capacity');
+                        })
+                        ->orWhere('status', 'closed');
                 });
             })
             ->orderBy('starts_at')
@@ -58,16 +60,15 @@ class EventController extends Controller
 
         $categories = Category::orderBy('name')->get();
 
-        return view('events.index', compact('events','categories'));
+        return view('events.index', compact('events', 'categories'));
     }
 
     public function show(string $slug)
     {
-        $event = Event::with(['category','organizer'])
+        $event = Event::with(['category', 'organizer'])
             ->where('slug', $slug)
             ->firstOrFail();
 
         return view('events.show', compact('event'));
     }
 }
-

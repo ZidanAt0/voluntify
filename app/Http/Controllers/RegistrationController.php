@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\Registration;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use App\Http\Requests\RegistrationApplyRequest;
 
 
@@ -15,10 +14,16 @@ class RegistrationController extends Controller
     // Tampilkan form apply
     public function create(Request $request, Event $event)
     {
+        // Organizer tidak boleh apply sebagai peserta
+        if ($request->user()->hasAnyRole(['organizer','admin'])) {
+            return redirect()->route('events.show', $event->slug)
+                ->with('error', 'Akun organizer tidak dapat mendaftar sebagai peserta.');
+        }
+
         // harus event terbuka & kuota ada
         if (!$event->isOpen()) {
             return redirect()->route('events.show', $event->slug)
-                ->with('status', 'Pendaftaran ditutup.');
+                ->with('error', 'Pendaftaran ditutup.');
         }
 
         // kalau sudah terdaftar (kecuali cancelled) langsung ke detail pendaftaran
@@ -36,17 +41,32 @@ class RegistrationController extends Controller
             'user'  => $request->user(),
         ]);
     }
+    public function downloadCertificate(Registration $registration)
+    {
+        $this->authorize('own', $registration);
+
+        if ($registration->status !== 'completed' || !$registration->certificate_path) {
+            return back()->with('status', 'Sertifikat belum tersedia.');
+        }
+
+        return \Storage::download('public/' . $registration->certificate_path);
+    }
+
 
     // Simpan apply
     public function store(RegistrationApplyRequest $request, Event $event)
     {
+        if ($request->user()->hasAnyRole(['organizer','admin'])) {
+            return back()->with('error', 'Akun organizer tidak dapat mendaftar sebagai peserta.');
+        }
+
         if (!$event->isOpen()) {
-            return back()->with('status', 'Pendaftaran ditutup.');
+            return back()->with('error', 'Pendaftaran ditutup.');
         }
 
         // kuota penuh?
         if (!is_null($event->capacity) && $event->registration_count >= $event->capacity) {
-            return back()->with('status', 'Kuota peserta sudah penuh.');
+            return back()->with('error', 'Kuota peserta sudah penuh.');
         }
 
         // jika pernah cancelled, aktifkan lagi + overwrite answers
@@ -60,15 +80,19 @@ class RegistrationController extends Controller
 
         if ($existing) {
             $existing->update([
-                'status'      => 'applied',
-                'applied_at'  => now(),
-                'cancelled_at'=> null,
-                'answers'     => $answers,
+                'status'       => 'applied',
+                'applied_at'   => now(),
+                'cancelled_at' => null,
+                'answers'      => $answers,
+                'checkin_code' => (string) random_int(100000, 999999),
             ]);
+
             $event->increment('registration_count');
+
             return redirect()->route('registrations.show', $existing)
                 ->with('status', 'Pendaftaran diaktifkan kembali.');
         }
+
 
         $reg = Registration::create([
             'event_id' => $event->id,
@@ -76,6 +100,7 @@ class RegistrationController extends Controller
             'status'   => 'applied',
             'applied_at' => now(),
             'answers'  => $answers,
+            'checkin_code' => (string) random_int(100000, 999999),
         ]);
 
         $event->increment('registration_count');
@@ -98,7 +123,7 @@ class RegistrationController extends Controller
         $this->authorize('own', $registration);
 
         if (!$registration->cancellable()) {
-            return back()->with('status', 'Tidak bisa dibatalkan (sudah mulai / dibatalkan).');
+            return back()->with('error', 'Tidak bisa dibatalkan (sudah mulai / sudah check-in / selesai).');
         }
 
         $registration->update([
@@ -120,8 +145,10 @@ class RegistrationController extends Controller
         $regs = \App\Models\Registration::with(['event.category'])
             ->where('user_id', $request->user()->id)
             ->when($status, fn($qq) => $qq->where('status', $status))
-            ->when($q, fn($qq) => $qq->whereHas('event', fn($ee) =>
-                $ee->where('title', 'like', '%'.$q.'%')
+            ->when($q, fn($qq) => $qq->whereHas(
+                'event',
+                fn($ee) =>
+                $ee->where('title', 'like', '%' . $q . '%')
             ))
             ->latest()
             ->paginate(9)
@@ -130,10 +157,10 @@ class RegistrationController extends Controller
         $counts = \App\Models\Registration::selectRaw('status, COUNT(*) as total')
             ->where('user_id', $request->user()->id)
             ->groupBy('status')
-            ->pluck('total','status')
+            ->pluck('total', 'status')
             ->all();
 
-        return view('registrations.index', compact('regs','status','q','counts'));
+        return view('registrations.index', compact('regs', 'status', 'q', 'counts'));
     }
 
 

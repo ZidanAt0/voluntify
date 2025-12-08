@@ -17,19 +17,32 @@ class RoleSeeder extends Seeder
 
         $admin = User::firstOrCreate(
             ['email' => 'admin@voluntify.com'],
-            ['name' => 'Admin', 'password' => Hash::make('password')]
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(), // Admin tidak perlu verifikasi email
+            ]
         );
         $admin->syncRoles('admin');
 
         $organizer = User::firstOrCreate(
             ['email' => 'organizer@voluntify.com'],
-            ['name' => 'Organizer', 'password' => Hash::make('password')]
+            [
+                'name' => 'Organizer',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(), // Organizer di seeder langsung verified
+                'organizer_verified_at' => now(), // Organizer di seeder langsung verified oleh "sistem"
+            ]
         );
         $organizer->syncRoles('organizer');
 
         $member = User::firstOrCreate(
             ['email' => 'user@voluntify.com'],
-            ['name' => 'User', 'password' => Hash::make('password')]
+            [
+                'name' => 'User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(), // User di seeder langsung verified untuk testing
+            ]
         );
         $member->syncRoles('user');
     }

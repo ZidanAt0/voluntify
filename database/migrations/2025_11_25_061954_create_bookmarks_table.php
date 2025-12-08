@@ -5,17 +5,18 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('bookmarks', function (Blueprint $t) {
             $t->id();
             $t->foreignId('user_id')->constrained()->cascadeOnDelete();
             $t->foreignId('event_id')->constrained()->cascadeOnDelete();
             $t->timestamps();
-            $t->unique(['user_id','event_id']);
+            $t->unique(['user_id', 'event_id']);
         });
     }
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('bookmarks');
     }
 };
-
