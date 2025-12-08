@@ -29,7 +29,15 @@ class AdminUserController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.users.index', compact('users', 'q', 'role'));
+        // Statistics for dashboard
+        $stats = [
+            'total' => User::count(),
+            'organizers' => User::role('organizer')->count(),
+            'verified' => User::whereNotNull('organizer_verified_at')->count(),
+            'suspended' => User::whereNotNull('suspended_at')->count(),
+        ];
+
+        return view('admin.users.index', compact('users', 'q', 'role', 'stats'));
     }
 
     public function verifyOrganizer(User $user)
@@ -66,6 +74,12 @@ class AdminUserController extends Controller
         }
 
         $user->syncRoles([$data['role']]);
+
+        // Auto-verify email untuk admin
+        if ($data['role'] === 'admin' && is_null($user->email_verified_at)) {
+            $user->email_verified_at = Carbon::now();
+            $user->save();
+        }
 
         return back()->with('success', 'Peran pengguna diperbarui.');
     }

@@ -30,12 +30,12 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
 
-    Route::middleware('role:organizer')->prefix('organizer')->name('organizer.')->group(function () {
+    Route::middleware(['role:organizer', 'organizer_verified'])->prefix('organizer')->name('organizer.')->group(function () {
         Route::view('/dashboard', 'organizer.dashboard')->name('dashboard'); // nanti diganti controller
     });
 });
 
-Route::middleware(['auth','verified','role:admin'])
+Route::middleware(['auth','role:admin'])
     ->prefix('admin')->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -53,6 +53,7 @@ Route::middleware(['auth','verified','role:admin'])
         Route::post('events/{event}/approve', [AdminEventModerationController::class, 'approve'])->name('events.approve');
         Route::post('events/{event}/reject',  [AdminEventModerationController::class, 'reject'])->name('events.reject');
         Route::post('events/{event}/close',   [AdminEventModerationController::class, 'close'])->name('events.close');
+        Route::post('events/{event}/open',    [AdminEventModerationController::class, 'open'])->name('events.open');
         Route::post('events/{event}/cancel',  [AdminEventModerationController::class, 'cancel'])->name('events.cancel');
     });
 
@@ -85,7 +86,7 @@ Route::middleware('auth')->get(
 )->name('registrations.certificate');
 
 
-Route::middleware(['auth', 'role:organizer'])
+Route::middleware(['auth', 'role:organizer', 'organizer_verified'])
     ->prefix('organizer')
     ->name('organizer.')
     ->group(function () {

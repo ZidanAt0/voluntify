@@ -53,9 +53,10 @@ class EventFactory extends Factory
             'ends_at'      => $end,
             'capacity'     => $this->faker->randomElement([null,50,100,150,200]),
             'registration_count' => 0,
-            'status'       => 'published',
-            'published_at' => now(),
+            'status'       => 'draft',
+            'published_at' => null,
             'banner_path'  => "https://picsum.photos/seed/{$slug}/800/450",
+            'review_status' => 'pending',
         ];
     }
 }

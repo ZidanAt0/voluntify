@@ -41,7 +41,6 @@ class EventController extends Controller
             'starts_at'   => 'required|date|after:now',
             'ends_at'     => 'required|date|after:starts_at',
             'capacity'    => 'nullable|integer|min:1',
-            'status'      => 'required|in:draft,published,closed,cancelled',
             'banner'      => 'nullable|image|max:2048',
         ]);
 
@@ -69,36 +68,48 @@ class EventController extends Controller
             'ends_at'      => $request->ends_at,
             'capacity'     => $request->capacity,
             'banner_path'  => $bannerPath,
-            'status'       => $request->status,
+            'status'       => 'draft',
+            'review_status' => 'pending',
         ]);
 
         return redirect()->route('organizer.events.index')
-            ->with('success', 'Event berhasil dibuat.');
+            ->with('success', 'Event berhasil dibuat dan menunggu persetujuan admin.');
     }
 
 
     public function publish(Event $event)
 {
+    if ($event->organizer_id !== auth()->id()) abort(403);
+
+    // Submit untuk review admin
     $event->update([
-        'status' => 'published',
-        'published_at' => now()
+        'review_status' => 'pending',
     ]);
 
     return redirect()
         ->route('organizer.events.index')
-        ->with('success', 'Event berhasil dipublish!');
+        ->with('success', 'Event telah diajukan untuk review admin.');
 }
 
 public function unpublish(Event $event)
 {
-    $event->update([
-        'status' => 'draft',
-        'published_at' => null
-    ]);
+    if ($event->organizer_id !== auth()->id()) abort(403);
+
+    // Hanya bisa unpublish jika sudah approved
+    if ($event->review_status === 'approved') {
+        $event->update([
+            'status' => 'draft',
+            'published_at' => null,
+        ]);
+
+        return redirect()
+            ->route('organizer.events.index')
+            ->with('success', 'Event dikembalikan ke draft.');
+    }
 
     return redirect()
         ->route('organizer.events.index')
-        ->with('success', 'Event dikembalikan ke draft.');
+        ->with('error', 'Hanya event yang sudah disetujui yang bisa di-unpublish.');
 }
 
     public function edit(Event $event)
@@ -126,7 +137,6 @@ public function unpublish(Event $event)
         'city' => 'nullable|string|max:255',
         'address' => 'nullable|string|max:255',
         'location_type' => 'required|in:onsite,online,hybrid',
-        'status' => 'required|in:draft,published,closed,cancelled',
         'banner' => 'nullable|image|max:2048',
         'remove_banner' => 'nullable|boolean',
     ]);

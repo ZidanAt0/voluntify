@@ -50,6 +50,41 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // Check if user is suspended
+        if (!is_null($user->suspended_at)) {
+            // Logout before throwing exception
+            Auth::logout();
+
+            // Increment rate limiter for security
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun Anda telah di-suspend. Silakan hubungi admin untuk informasi lebih lanjut.',
+            ]);
+        }
+
+        // Auto-verify email untuk admin (admin tidak perlu verifikasi email)
+        if ($user->hasRole('admin') && is_null($user->email_verified_at)) {
+            $user->email_verified_at = now();
+            $user->save();
+        }
+
+        // Check if organizer is not verified yet
+        if ($user->hasRole('organizer') && is_null($user->organizer_verified_at)) {
+            // Logout before throwing exception
+            Auth::logout();
+
+            // Increment rate limiter for security
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun organizer Anda belum diverifikasi oleh admin. Silakan tunggu verifikasi atau hubungi admin.',
+            ]);
+        }
     }
 
     /**

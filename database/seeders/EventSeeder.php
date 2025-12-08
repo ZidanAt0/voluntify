@@ -14,7 +14,12 @@ class EventSeeder extends Seeder
     {
         $organizer = User::firstOrCreate(
             ['email' => 'organizer@local.test'],
-            ['name' => 'Organizer', 'password' => Hash::make('password')]
+            [
+                'name' => 'Organizer',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'organizer_verified_at' => now(),
+            ]
         );
         if (method_exists($organizer, 'assignRole')) {
             $organizer->syncRoles('organizer');

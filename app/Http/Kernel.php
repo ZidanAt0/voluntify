@@ -61,6 +61,7 @@ class Kernel extends HttpKernel
         'permission' => PermissionMiddleware::class,
         'role_or_permission' => RoleOrPermissionMiddleware::class,
         'not_suspended' => \App\Http\Middleware\EnsureNotSuspended::class,
+        'organizer_verified' => \App\Http\Middleware\EnsureOrganizerVerified::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,

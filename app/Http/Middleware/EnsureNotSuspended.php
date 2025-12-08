@@ -12,7 +12,10 @@ class EnsureNotSuspended
     {
         if (Auth::check() && !is_null(Auth::user()->suspended_at)) {
             Auth::logout();
-            return redirect()->route('login')->with('error', 'Akun disuspend. Hubungi admin.');
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('error', 'Akun Anda telah di-suspend. Silakan hubungi admin untuk informasi lebih lanjut.');
         }
 
         return $next($request);
