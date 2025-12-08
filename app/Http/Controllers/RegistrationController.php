@@ -14,10 +14,16 @@ class RegistrationController extends Controller
     // Tampilkan form apply
     public function create(Request $request, Event $event)
     {
+        // Organizer tidak boleh apply sebagai peserta
+        if ($request->user()->hasAnyRole(['organizer','admin'])) {
+            return redirect()->route('events.show', $event->slug)
+                ->with('error', 'Akun organizer tidak dapat mendaftar sebagai peserta.');
+        }
+
         // harus event terbuka & kuota ada
         if (!$event->isOpen()) {
             return redirect()->route('events.show', $event->slug)
-                ->with('status', 'Pendaftaran ditutup.');
+                ->with('error', 'Pendaftaran ditutup.');
         }
 
         // kalau sudah terdaftar (kecuali cancelled) langsung ke detail pendaftaran
@@ -50,13 +56,17 @@ class RegistrationController extends Controller
     // Simpan apply
     public function store(RegistrationApplyRequest $request, Event $event)
     {
+        if ($request->user()->hasAnyRole(['organizer','admin'])) {
+            return back()->with('error', 'Akun organizer tidak dapat mendaftar sebagai peserta.');
+        }
+
         if (!$event->isOpen()) {
-            return back()->with('status', 'Pendaftaran ditutup.');
+            return back()->with('error', 'Pendaftaran ditutup.');
         }
 
         // kuota penuh?
         if (!is_null($event->capacity) && $event->registration_count >= $event->capacity) {
-            return back()->with('status', 'Kuota peserta sudah penuh.');
+            return back()->with('error', 'Kuota peserta sudah penuh.');
         }
 
         // jika pernah cancelled, aktifkan lagi + overwrite answers
@@ -113,7 +123,7 @@ class RegistrationController extends Controller
         $this->authorize('own', $registration);
 
         if (!$registration->cancellable()) {
-            return back()->with('status', 'Tidak bisa dibatalkan (sudah mulai / dibatalkan).');
+            return back()->with('error', 'Tidak bisa dibatalkan (sudah mulai / sudah check-in / selesai).');
         }
 
         $registration->update([

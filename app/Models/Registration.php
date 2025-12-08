@@ -33,7 +33,10 @@ class Registration extends Model
 
     public function cancellable(): bool
     {
-        return $this->status !== 'cancelled'
-            && $this->event?->starts_at?->isFuture();
+        if (in_array($this->status, ['cancelled', 'checked_in', 'completed'])) {
+            return false;
+        }
+
+        return $this->event?->starts_at?->isFuture() ?? false;
     }
 }

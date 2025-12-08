@@ -30,6 +30,10 @@ class Event extends Model
         'status',
         'published_at',
         'banner_path',
+        'review_status',
+        'reviewed_by_id',
+        'approved_at',
+        'rejected_at',
     ];
 
 
@@ -37,6 +41,8 @@ class Event extends Model
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'published_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     // Relasi
@@ -117,5 +123,11 @@ class Event extends Model
     {
         if (!$userId) return null;
         return $this->registrations()->where('user_id', $userId)->first();
+    }
+
+    // Scope review pending
+    public function scopePending($query)
+    {
+        return $query->where('review_status', 'pending');
     }
 }
