@@ -16,7 +16,7 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminEventModerationController;
 
 // Landing
-Route::view('/', 'landing')->name('home');
+Route::get('/', [App\Http\Controllers\LandingController::class, 'index'])->name('home');
 Route::redirect('/home', '/');
 
 // Auth + Profile

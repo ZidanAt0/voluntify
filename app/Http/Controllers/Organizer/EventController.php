@@ -42,6 +42,7 @@ class EventController extends Controller
             'ends_at'     => 'required|date|after:starts_at',
             'capacity'    => 'nullable|integer|min:1',
             'banner'      => 'nullable|image|max:2048',
+            'status'      => 'required|in:draft,submit_for_review',
         ]);
 
         // Upload banner
@@ -53,6 +54,18 @@ class EventController extends Controller
         $excerpt = $request->filled('excerpt')
             ? $request->excerpt
             : Str::limit(strip_tags($request->description), 150);
+
+        // Determine review status based on user choice
+        $reviewStatus = null;
+        $successMessage = '';
+
+        if ($request->status === 'submit_for_review') {
+            $reviewStatus = 'pending';
+            $successMessage = 'Event berhasil dibuat dan diajukan untuk review admin.';
+        } else {
+            $reviewStatus = null;
+            $successMessage = 'Event berhasil disimpan sebagai draft. Anda bisa submit untuk review nanti.';
+        }
 
         Event::create([
             'organizer_id' => auth()->id(),
@@ -69,11 +82,11 @@ class EventController extends Controller
             'capacity'     => $request->capacity,
             'banner_path'  => $bannerPath,
             'status'       => 'draft',
-            'review_status' => 'pending',
+            'review_status' => $reviewStatus,
         ]);
 
         return redirect()->route('organizer.events.index')
-            ->with('success', 'Event berhasil dibuat dan menunggu persetujuan admin.');
+            ->with('success', $successMessage);
     }
 
 
@@ -81,9 +94,17 @@ class EventController extends Controller
 {
     if ($event->organizer_id !== auth()->id()) abort(403);
 
+    // Hanya bisa submit jika status draft
+    if ($event->status !== 'draft') {
+        return redirect()
+            ->route('organizer.events.index')
+            ->with('error', 'Hanya event dengan status draft yang bisa diajukan untuk review.');
+    }
+
     // Submit untuk review admin
     $event->update([
         'review_status' => 'pending',
+        'rejected_at' => null, // Reset jika sebelumnya ditolak
     ]);
 
     return redirect()
@@ -137,6 +158,7 @@ public function unpublish(Event $event)
         'city' => 'nullable|string|max:255',
         'address' => 'nullable|string|max:255',
         'location_type' => 'required|in:onsite,online,hybrid',
+        'status' => 'required|in:draft,published,closed,cancelled',
         'banner' => 'nullable|image|max:2048',
         'remove_banner' => 'nullable|boolean',
     ]);
@@ -147,6 +169,37 @@ public function unpublish(Event $event)
         return back()
             ->with('error', 'Event tidak dapat diperbarui karena jadwal sudah lewat.')
             ->withInput();
+    }
+
+    // Validasi perubahan status
+    $newStatus = $data['status'];
+    $currentStatus = $event->status;
+
+    // Organizer tidak bisa publish event jika belum approved admin
+    if ($newStatus === 'published' && $event->review_status !== 'approved') {
+        return back()
+            ->with('error', 'Event belum disetujui admin. Tidak bisa dipublish.')
+            ->withInput();
+    }
+
+    // Jika mengubah ke cancelled, set published_at ke null dan batalkan semua registrations
+    if ($newStatus === 'cancelled' && $currentStatus !== 'cancelled') {
+        $data['published_at'] = null;
+
+        // Batalkan SEMUA registrations yang belum completed atau rejected
+        // Termasuk: applied, pending, approved, waitlisted, checked_in
+        $affectedRegistrations = $event->registrations()
+            ->whereNotIn('status', ['completed', 'rejected', 'cancelled'])
+            ->update([
+                'status' => 'cancelled',
+                'cancelled_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+    }
+
+    // Jika mengubah dari cancelled ke published (dan sudah approved)
+    if ($newStatus === 'published' && $currentStatus === 'cancelled' && $event->review_status === 'approved') {
+        $data['published_at'] = Carbon::now();
     }
 
     $data['excerpt'] = $data['excerpt'] ?? Str::limit(strip_tags($request->description), 150);
@@ -167,9 +220,21 @@ public function unpublish(Event $event)
 
     $event->update($data);
 
+    // Success message berdasarkan perubahan status
+    $message = 'Event berhasil diperbarui!';
+    if ($newStatus !== $currentStatus) {
+        $statusMessages = [
+            'draft' => 'Event dikembalikan ke draft.',
+            'published' => 'Event berhasil dipublish!',
+            'closed' => 'Pendaftaran event berhasil ditutup. Peserta yang sudah terdaftar masih bisa check-in.',
+            'cancelled' => 'Event dibatalkan. ' . (isset($affectedRegistrations) && $affectedRegistrations > 0 ? "$affectedRegistrations pendaftaran telah dibatalkan secara otomatis." : 'Semua pendaftaran telah dibatalkan.'),
+        ];
+        $message = $statusMessages[$newStatus] ?? $message;
+    }
+
     return redirect()
         ->route('organizer.events.index')
-        ->with('success', 'Event berhasil diperbarui!');
+        ->with('success', $message);
 }
 
 

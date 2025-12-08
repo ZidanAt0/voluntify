@@ -129,14 +129,34 @@
                class="w-full mt-1 rounded border-gray-300">
     </div>
 
-    <div>
+        <div>
         <label class="text-sm font-medium">Status Event</label>
         <select name="status" class="w-full mt-1 rounded border-gray-300" required>
-            <option value="draft" @selected(old('status', $event->status) === 'draft')>Draft</option>
-            <option value="published" @selected(old('status', $event->status) === 'published')>Publish</option>
-            <option value="closed" @selected(old('status', $event->status) === 'closed')>Closed</option>
-            <option value="cancelled" @selected(old('status', $event->status) === 'cancelled')>Cancelled</option>
+            <option value="draft" @selected(old('status', $event->status) === 'draft')>
+                Draft
+            </option>
+            <option value="published" @selected(old('status', $event->status) === 'published')>
+                Published
+            </option>
+            <option value="closed" @selected(old('status', $event->status) === 'closed')>
+                Closed
+            </option>
+            <option value="cancelled" @selected(old('status', $event->status) === 'cancelled')>
+                Cancelled
+            </option>
         </select>
+        <div class="mt-2 text-xs text-gray-600 space-y-1">
+            <p><strong>Draft:</strong> Event tidak terlihat oleh user, belum bisa menerima pendaftar.</p>
+            <p><strong>Published:</strong> Event live di website, user bisa mendaftar. <em>(Hanya bisa jika sudah approved admin)</em></p>
+            <p><strong>Closed:</strong> Menutup pendaftaran baru, tapi event tetap berjalan. Peserta yang sudah terdaftar masih bisa check-in.</p>
+            <p><strong>Cancelled:</strong> Event dibatalkan/tidak jadi dilaksanakan. Semua pendaftaran dibatalkan.</p>
+        </div>
+
+        @if($event->review_status !== 'approved')
+            <div class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                <strong>⚠️ Perhatian:</strong> Event ini belum disetujui admin. Anda tidak bisa mengubah status ke "Published" sampai admin menyetujui event ini.
+            </div>
+        @endif
     </div>
 
     <div class="pt-4 flex gap-3">
