@@ -20,6 +20,7 @@ class EventController extends Controller
 
         $events = Event::with('category')
             ->where('status', 'published')
+            ->where('review_status', 'approved')
             ->when($q, function ($query, $q) {
                 // Postgres     
                 return $query->where(function ($qq) use ($q) {

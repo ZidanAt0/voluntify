@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -9,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Facades\Storage;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
@@ -23,6 +24,9 @@ class User extends Authenticatable
         'interests',
         'avatar_path',
         'address', // ← tanpa 'phone'
+        'suspended_at',
+        'organizer_verified_at',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -32,6 +36,8 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'organizer_verified_at' => 'datetime',
+        'suspended_at' => 'datetime',
         'interests' => 'array',
     ];
 
@@ -41,6 +47,11 @@ class User extends Authenticatable
         return $this->avatar_path
             ? \Storage::url($this->avatar_path)
             : 'https://placehold.co/96x96?text=' . (trim($this->name ? mb_substr($this->name, 0, 1) : 'U'));
+    }
+
+    public function isSuspended(): bool
+    {
+        return !is_null($this->suspended_at);
     }
 
 

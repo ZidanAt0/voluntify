@@ -15,7 +15,7 @@ class RegistrationController extends Controller
     public function create(Request $request, Event $event)
     {
         // Organizer tidak boleh apply sebagai peserta
-        if ($request->user()->hasRole('organizer')) {
+        if ($request->user()->hasAnyRole(['organizer','admin'])) {
             return redirect()->route('events.show', $event->slug)
                 ->with('error', 'Akun organizer tidak dapat mendaftar sebagai peserta.');
         }
@@ -56,7 +56,7 @@ class RegistrationController extends Controller
     // Simpan apply
     public function store(RegistrationApplyRequest $request, Event $event)
     {
-        if ($request->user()->hasRole('organizer')) {
+        if ($request->user()->hasAnyRole(['organizer','admin'])) {
             return back()->with('error', 'Akun organizer tidak dapat mendaftar sebagai peserta.');
         }
 

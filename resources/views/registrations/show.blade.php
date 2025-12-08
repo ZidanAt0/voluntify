@@ -23,6 +23,37 @@
         </div>
     @endif
 
+    {{-- CANCELLED NOTIFICATION --}}
+    @if ($registration->status === 'cancelled')
+        <div class="mt-4 bg-red-50 border-l-4 border-red-600 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-red-900">Event Dibatalkan</h3>
+                    <p class="mt-1 text-sm text-red-700">
+                        Pendaftaran Anda untuk event ini telah dibatalkan karena event tidak jadi dilaksanakan oleh organizer.
+                        @if ($registration->cancelled_at)
+                            Dibatalkan pada: {{ $registration->cancelled_at->locale('id')->format('d F Y, H:i') }}
+                        @endif
+                    </p>
+                    <p class="mt-2 text-sm text-red-700">
+                        Silakan hubungi organizer untuk informasi lebih lanjut atau jelajahi event lain yang tersedia.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{{ route('events.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            Jelajahi Event Lain
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="mt-6 grid lg:grid-cols-3 gap-6">
 
         {{-- ================= LEFT CONTENT ================= --}}
