@@ -17,8 +17,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <a href="{{ url('/') }}" class="text-xl font-semibold tracking-tight">Voluntify</a>
             <nav class="flex items-center gap-6 text-sm">
-                <a href="#" class="hover:text-indigo-600">Explore</a>
-                <a href="#" class="hover:text-indigo-600">About</a>
+                <a href="{{ route('events.index') }}" class="text-sm text-gray-700 hover:text-indigo-600">Jelajah</a>
                 @auth
                     <a href="{{ route('dashboard') }}"
                         class="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-500">Dashboard</a>

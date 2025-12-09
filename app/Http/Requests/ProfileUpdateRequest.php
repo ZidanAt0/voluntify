@@ -17,7 +17,7 @@ class ProfileUpdateRequest extends FormRequest
             'email' => ['required','string','email','max:255', \Illuminate\Validation\Rule::unique('users','email')->ignore($this->user()->id)],
             'whatsapp' => ['nullable','string','max:30'],
             'city'     => ['nullable','string','max:100'],
-            'address'  => ['nullable','string','max:500'],   // ← alamat baru
+            'address'  => ['nullable','string','max:500'],
             'bio'      => ['nullable','string','max:1000'],
             'interests'=> ['nullable'],
             'avatar'   => ['nullable','image','max:2048'],
