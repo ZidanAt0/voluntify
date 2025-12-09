@@ -26,9 +26,17 @@ class CheckinController extends Controller
         if (!$registration) {
             return back()->with('error', 'Kode check-in tidak ditemukan.');
         }
+        if ($registration->event->organizer_id !== auth()->id()) {
+            return back()->with('error', 'Anda tidak memiliki akses untuk check-in peserta event ini. Event ini bukan milik Anda.');
+        }
 
         if ($registration->checked_in_at) {
-            return back()->with('error', 'Peserta sudah melakukan check-in.');
+            return back()->with('error', 'Peserta sudah melakukan check-in pada: ' . $registration->checked_in_at->format('d M Y H:i'));
+        }
+
+        // Validasi status registration
+        if ($registration->status !== 'approved') {
+            return back()->with('error', 'Peserta belum disetujui. Status: ' . ucfirst($registration->status));
         }
 
         // ✅ CHECK-IN SAH
@@ -37,6 +45,6 @@ class CheckinController extends Controller
             'status' => 'checked_in',
         ]);
 
-        return back()->with('success', 'Check-in berhasil untuk: '.$registration->user->name);
+        return back()->with('success', 'Check-in berhasil! Peserta: ' . $registration->user->name . ' untuk event: ' . $registration->event->title);
     }
 }

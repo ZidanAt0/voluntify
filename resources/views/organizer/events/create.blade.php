@@ -164,11 +164,13 @@
         <label class="text-sm font-medium">Status Event</label>
         <select name="status" required
                 class="w-full mt-1 rounded border-gray-300">
-            <option value="draft">Draft</option>
-            <option value="published">Publish</option>
-            <option value="closed">Closed</option>
-            <option value="cancelled">Cancelled</option>
+                <option value="draft">Simpan sebagai Draft</option>
+                <option value="submit_for_review">Submit untuk Review Admin</option>
         </select>
+        <p class="mt-1 text-xs text-gray-500">
+            Draft: Event disimpan tapi belum diajukan ke admin. Anda bisa edit lagi nanti.<br>
+            Submit untuk Review: Event langsung diajukan ke admin untuk disetujui.
+        </p>
     </div>
 
     {{-- SUBMIT --}}

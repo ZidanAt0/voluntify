@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('events', function (Blueprint $table) {
             if (!Schema::hasColumn('events', 'review_status')) {
-                $table->enum('review_status', ['pending', 'approved', 'rejected'])->default('pending')->after('status');
+                $table->enum('review_status', ['pending', 'approved', 'rejected'])->nullable()->after('status');
             }
             if (!Schema::hasColumn('events', 'reviewed_by_id')) {
                 $table->foreignId('reviewed_by_id')->nullable()->after('review_status')->constrained('users')->nullOnDelete();
